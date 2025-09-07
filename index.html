@@ -29,6 +29,14 @@
             gap: 1.5rem;
         }
 
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
         .title {
             font-size: 2.5rem;
             font-weight: 700;
@@ -120,12 +128,21 @@
             font-style: italic;
             text-align: center;
         }
+
+        .beta-text {
+            font-size: 0.75rem;
+            color: #8b949e;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="title">Nauli</div>
+        <div class="title-wrapper">
+            <div class="title">Nauli</div>
+            <div class="beta-text">Beta Version (development still in progress)</div>
+        </div>
 
         <div class="input-group">
             <select id="languageSelect" class="input-field">
@@ -163,7 +180,7 @@
             const resultOutput = document.getElementById('resultOutput');
             const languageSelect = document.getElementById('languageSelect');
 
-            const API_KEY = "AIzaSyC7kqY4K2Lr8I-n65zgrjQRwY9C6VY2jNY"; // Leave this as is, the Canvas environment will provide the API key
+            const API_KEY = "YOUR_API_KEY_HERE"; // PASTE YOUR API KEY HERE
             const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
             // Store the last generated content for the copy function
