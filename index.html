@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nauli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2.5rem;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+        }
+
+        .prompt-box {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        .prompt-box:focus {
+            border-color: #4f46e5;
+        }
+
+        .button-group {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .generate-button {
+            background-color: #4f46e5;
+            color: #ffffff;
+        }
+
+        .generate-button:hover {
+            background-color: #4338ca;
+        }
+
+        .clear-button {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .clear-button:hover {
+            background-color: #d1d5db;
+        }
+
+        .copy-button {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+        
+        .copy-button:hover {
+            background-color: #059669;
+        }
+
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: left;
+            flex-grow: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="title">Nauli</div>
+        
+        <!-- Language selection dropdown -->
+        <div class="mb-4 text-left">
+            <label for="language-select" class="block text-gray-700 font-medium mb-1">Select Language:</label>
+            <select id="language-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="html" selected>HTML</option>
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="java">Java</option>
+                <option value="c++">C++</option>
+                <option value="c#">C#</option>
+                <option value="markdown">Markdown</option>
+            </select>
+        </div>
+
+        <textarea id="prompt-input" class="prompt-box" placeholder="Enter your prompt here..."></textarea>
+        <div class="button-group">
+            <button id="generate-button" class="action-button generate-button">Generate</button>
+            <button id="clear-button" class="action-button clear-button">Clear</button>
+            <button id="copy-button" class="action-button copy-button">Copy</button>
+        </div>
+        <div id="result-output" class="result-box">
+            The AI response will appear here.
+        </div>
+    </div>
+
+    <script>
+        const promptInput = document.getElementById('prompt-input');
+        const generateButton = document.getElementById('generate-button');
+        const clearButton = document.getElementById('clear-button');
+        const resultOutput = document.getElementById('result-output');
+        const languageSelect = document.getElementById('language-select');
+        const copyButton = document.getElementById('copy-button');
+
+        async function generateContent(prompt) {
+            // Set initial loading state
+            resultOutput.innerHTML = "Generating...";
+            generateButton.textContent = "Generating...";
+            generateButton.disabled = true;
+            clearButton.disabled = true;
+            copyButton.disabled = true;
+            
+            const selectedLanguage = languageSelect.value;
+            const apiKey = "";
+            const modelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const systemInstructionText = `You are a code generator. When a user asks for code, respond with a single, complete ${selectedLanguage} file block. The file block must start with \`\`\`${selectedLanguage}:{...}:{...} and end with \`\`\`eof. Do not include any other text before or after the file block.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: {
+                    parts: [{ text: systemInstructionText }]
+                },
+            };
+
+            // Use a try/catch/finally block for robust error handling and state management
+            try {
+                const response = await fetch(modelUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response received. Please try again.";
+                
+                // Display the raw text from the AI, which should be the code block.
+                resultOutput.innerHTML = text;
+            } catch (error) {
+                console.error("Error calling the AI service:", error);
+                resultOutput.innerHTML = "An error occurred. Please check the console for more details.";
+            } finally {
+                // Reset buttons to their original state
+                generateButton.textContent = "Generate";
+                generateButton.disabled = false;
+                clearButton.disabled = false;
+                copyButton.disabled = false;
+            }
+        }
+
+        generateButton.addEventListener('click', () => {
+            const prompt = promptInput.value.trim();
+            if (prompt) {
+                generateContent(prompt);
+            } else {
+                resultOutput.innerHTML = "Please enter a prompt to generate a response.";
+            }
+        });
+
+        clearButton.addEventListener('click', () => {
+            promptInput.value = '';
+            resultOutput.innerHTML = 'The AI response will appear here.';
+        });
+
+        copyButton.addEventListener('click', () => {
+            const codeToCopy = resultOutput.textContent;
+            // Check if the content is the default placeholder text or an error.
+            if (codeToCopy.trim() === "The AI response will appear here." || codeToCopy.trim() === "Generating..." || codeToCopy.trim().startsWith("An error occurred.")) {
+                return; // Do not copy placeholder or error text
+            }
+
+            // Create a temporary textarea element to hold the text
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeToCopy;
+            document.body.appendChild(tempTextArea);
+
+            // Select and copy the text
+            tempTextArea.select();
+            document.execCommand('copy');
+
+            // Remove the temporary element
+            document.body.removeChild(tempTextArea);
+
+            // Provide visual feedback to the user
+            const originalText = copyButton.textContent;
+            copyButton.textContent = "Copied!";
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        });
+    </script>
+
+</body>
+</html>
